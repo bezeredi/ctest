@@ -20,8 +20,8 @@ typedef void (*SetupFunc)(void*);
 typedef void (*TearDownFunc)(void*);
 
 struct ctest {
-    const char* ssname;  // suite name
-    const char* ttname;  // test name
+    const char* ssname;  /* suite name */
+    const char* ttname;  /* test name */
     void (*run)();
     int skip;
 
@@ -125,8 +125,8 @@ void assert_fail(const char* caller, int line);
 #ifdef CTEST_MAIN
 
 #include <setjmp.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -137,7 +137,7 @@ void assert_fail(const char* caller, int line);
 #include <dlfcn.h>
 #endif
 
-//#define COLOR_OK
+/* #define COLOR_OK */
 
 static size_t ctest_errorsize;
 static char* ctest_errormsg;
@@ -196,7 +196,7 @@ static void msg_end() {
 void CTEST_LOG(char *fmt, ...)
 {
     va_list argp;
-    msg_start(ANSI_BLUE, "LOG");
+    msg_start(ANSI_BBLUE, "     LOG");
 
     va_start(argp, fmt);
     int size = vsnprintf(ctest_errormsg, ctest_errorsize, fmt, argp);
@@ -210,7 +210,7 @@ void CTEST_LOG(char *fmt, ...)
 void CTEST_ERR(char *fmt, ...)
 {
     va_list argp;
-    msg_start(ANSI_YELLOW, "ERR");
+    msg_start(ANSI_BRED, "     Failure");
 
     va_start(argp, fmt);
     int size = vsnprintf(ctest_errormsg, ctest_errorsize, fmt, argp);
@@ -225,7 +225,7 @@ void assert_str(const char* exp, const char*  real, const char* caller, int line
     if ((exp == NULL && real != NULL) ||
         (exp != NULL && real == NULL) ||
         (exp && real && strcmp(exp, real) != 0)) {
-        CTEST_ERR("%s:%d  expected '%s', got '%s'", caller, line, exp, real);
+        CTEST_ERR("expected '%s', got '%s' (%s:%d)", exp, real, caller, line);
         longjmp(ctest_err, 1);
     }
 }
@@ -235,13 +235,13 @@ void assert_data(const unsigned char* exp, int expsize,
                  const char* caller, int line) {
     int i;
     if (expsize != realsize) {
-        CTEST_ERR("%s:%d  expected %d bytes, got %d", caller, line, expsize, realsize);
+        CTEST_ERR("expected %d bytes, got %d (%s:%d)", expsize, realsize, caller, line);
         longjmp(ctest_err, 1);
     }
     for (i=0; i<expsize; i++) {
         if (exp[i] != real[i]) {
-            CTEST_ERR("%s:%d expected 0x%02x at offset %d got 0x%02x",
-                caller, line, exp[i], i, real[i]);
+            CTEST_ERR("expected 0x%02x at offset %d got 0x%02x (%s:%d)",
+                exp[i], i, real[i], caller, line);
             longjmp(ctest_err, 1);
         }
     }
@@ -249,48 +249,48 @@ void assert_data(const unsigned char* exp, int expsize,
 
 void assert_equal(long exp, long real, const char* caller, int line) {
     if (exp != real) {
-        CTEST_ERR("%s:%d  expected %ld, got %ld", caller, line, exp, real);
+        CTEST_ERR("expected %ld, got %ld (%s:%d)", exp, real, caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_not_equal(long exp, long real, const char* caller, int line) {
     if ((exp) == (real)) {
-        CTEST_ERR("%s:%d  should not be %ld", caller, line, real);
+        CTEST_ERR("should not be %ld (%s:%d)", real, caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_null(void* real, const char* caller, int line) {
     if ((real) != NULL) {
-        CTEST_ERR("%s:%d  should be NULL", caller, line);
+        CTEST_ERR("should be NULL (%s:%d)", caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_not_null(void* real, const char* caller, int line) {
     if (real == NULL) {
-        CTEST_ERR("%s:%d  should not be NULL", caller, line);
+        CTEST_ERR("should not be NULL (%s:%d)", caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_true(int real, const char* caller, int line) {
     if ((real) == 0) {
-        CTEST_ERR("%s:%d  should be true", caller, line);
+        CTEST_ERR("should be true (%s:%d)", caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_false(int real, const char* caller, int line) {
     if ((real) != 0) {
-        CTEST_ERR("%s:%d  should be false", caller, line);
+        CTEST_ERR("should be false (%s:%d)", caller, line);
         longjmp(ctest_err, 1);
     }
 }
 
 void assert_fail(const char* caller, int line) {
-    CTEST_ERR("%s:%d  shouldn't come here", caller, line);
+    CTEST_ERR("by assertion (%s:%d)", caller, line);
     longjmp(ctest_err, 1);
 }
 
@@ -314,9 +314,9 @@ static uint64_t getCurrentTime() {
 
 static void color_print(const char* color, const char* text) {
     if (color_output)
-        printf("%s%s"ANSI_NORMAL"\n", color, text);
+        printf("%s%s"ANSI_NORMAL, color, text);
     else
-        printf("%s\n", text);
+        printf("%s", text);
 }
 
 #ifdef __APPLE__
@@ -327,12 +327,12 @@ static void *find_symbol(struct ctest *test, const char *fname)
     memset(symbol_name, 0, len + 1);
     snprintf(symbol_name, len + 1, "%s_%s", test->ssname, fname);
 
-    //fprintf(stderr, ">>>> dlsym: loading %s\n", symbol_name);
+    /* fprintf(stderr, ">>>> dlsym: loading %s\n", symbol_name); */
     void *symbol = dlsym(RTLD_DEFAULT, symbol_name);
     if (!symbol) {
-        //fprintf(stderr, ">>>> ERROR: %s\n", dlerror());
+        /* fprintf(stderr, ">>>> ERROR: %s\n", dlerror()); */
     }
-    // returns NULL on error
+    /* returns NULL on error */
     
     free(symbol_name);
     return symbol;
@@ -358,7 +358,7 @@ int ctest_main(int argc, const char *argv[])
 
     struct ctest* ctest_begin = &__TNAME(suite, test);
     struct ctest* ctest_end = &__TNAME(suite, test);
-    // find begin and end of section by comparing magics
+    /* find begin and end of section by comparing magics */
     while (1) {
         struct ctest* t = ctest_begin-1;
         if (t->magic != __CTEST_MAGIC) break;
@@ -369,7 +369,7 @@ int ctest_main(int argc, const char *argv[])
         if (t->magic != __CTEST_MAGIC) break;
         ctest_end++;
     }
-    ctest_end++;    // end after last one
+    ctest_end++;    /* end after last one */
 
     static struct ctest* test;
     for (test = ctest_begin; test != ctest_end; test++) {
@@ -383,10 +383,8 @@ int ctest_main(int argc, const char *argv[])
             ctest_errorbuffer[0] = 0;
             ctest_errorsize = MSG_SIZE-1;
             ctest_errormsg = ctest_errorbuffer;
-            printf("TEST %d/%d %s:%s ", index, total, test->ssname, test->ttname);
-            fflush(stdout);
             if (test->skip) {
-                color_print(ANSI_BYELLOW, "[SKIPPED]");
+                color_print(ANSI_BYELLOW, "[SKIP]");
                 num_skip++;
             } else {
                 int result = setjmp(ctest_err);
@@ -406,28 +404,53 @@ int ctest_main(int argc, const char *argv[])
                     else 
                       test->run();
                     if (test->teardown) test->teardown(test->data);
-                    // if we got here it's ok
+                    /* if we got here it's ok */
 #ifdef COLOR_OK
-                    color_print(ANSI_BGREEN, "[OK]");
+                    color_print(ANSI_BGREEN, "[PASS]");
 #else
-                    printf("[OK]\n");
+                    printf("[PASS]\n");
 #endif
                     num_ok++;
                 } else {
                     color_print(ANSI_BRED, "[FAIL]");
                     num_fail++;
                 }
-                if (ctest_errorsize != MSG_SIZE-1) printf("%s", ctest_errorbuffer);
             }
+				printf(" #%d %s:%s\n", index, test->ssname, test->ttname);
+				if (ctest_errorsize != MSG_SIZE-1) printf("%s", ctest_errorbuffer);
+				fflush(stdout);
             index++;
         }
+
     }
     uint64_t t2 = getCurrentTime();
 
-    const char* color = (num_fail) ? ANSI_BRED : ANSI_GREEN;
+	 char* color = ANSI_NORMAL;
     char results[80];
-    sprintf(results, "RESULTS: %d tests (%d ok, %d failed, %d skipped) ran in %lld ms", total, num_ok, num_fail, num_skip, (t2 - t1)/1000);
+    sprintf(results, "\nSUMMARY\n");
     color_print(color, results);
+	 memset(&results, 0x00, sizeof(results));
+
+    color = ANSI_BGREEN;
+	 sprintf(results, "   Passed:    [%d]\n", num_ok);
+	 color_print(color, results);
+	 memset(&results, 0x00, sizeof(results));
+
+	 color = (num_fail) ? ANSI_BRED : ANSI_BGREEN;
+    sprintf(results, "   Failed:    [%d]\n", num_fail);
+	 color_print(color, results);
+	 memset(&results, 0x00, sizeof(results));
+
+	 color = (num_skip) ? ANSI_BYELLOW : ANSI_BGREEN;
+    sprintf(results, "   Skipped:   [%d]\n", num_skip);
+	 color_print(color, results);
+	 memset(&results, 0x00, sizeof(results));
+	 
+	 color = ANSI_NORMAL;
+	 sprintf(results, "\n   Total:     [%d]\n   Runtime:   [%lldms]\n",
+	 		total, (t2 - t1)/1000);
+    color_print(color, results);
+
     return num_fail;
 }
 

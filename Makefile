@@ -1,6 +1,6 @@
 UNAME=$(shell uname)
 
-CCFLAGS=-Wall -Wextra -Wno-unused-parameter -O3
+CCFLAGS=-Wall -Wextra -Wno-unused-parameter -O2 -DCOLOR_OK
 ifdef CTEST_COLOR_OK
 CCFLAGS+=-DCOLOR_OK
 endif
@@ -9,16 +9,16 @@ ifeq ($(UNAME), Darwin)
 LDFLAGS=-Wl,-flat_namespace,-undefined,dynamic_lookup
 endif
 
-all: test
+all: ctest
 
 remake: clean all
 
 %.o: %.c ctest.h
 	gcc $(CCFLAGS) -c -o $@ $<
 
-test: main.o ctest.h mytests.o
-	gcc $(LDFLAGS) main.o mytests.o -o test
+ctest: main.o ctest.h mytests.o
+	gcc $(LDFLAGS) main.o mytests.o -o runtests
 
 clean:
-	rm -f test *.o
+	rm -f runtests *.o
 
